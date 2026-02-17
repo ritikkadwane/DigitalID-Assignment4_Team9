@@ -67,4 +67,8 @@ public class Person {
            return "Failed";
        }
    }
+      // Getter for testing suspension status
+   public boolean getIsSuspended() {
+       return isSuspended;
+   }
 }
