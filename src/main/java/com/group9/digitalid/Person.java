@@ -3,6 +3,9 @@ import java.util.Date;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
 import java.util.Calendar;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class Person {
    private String personID;
@@ -58,6 +61,12 @@ public class Person {
            } else if (age >= 21 && totalPoints > 12) {
                this.isSuspended = true;
            }
+           try (BufferedWriter writer = new BufferedWriter(new FileWriter("demeritPoints.txt", true))) {
+                writer.write(personID + "|" + offenseDateStr + "|" + points + "|" + totalPoints + "|" + isSuspended);
+                writer.newLine();
+            } catch (IOException e) {
+                return "Failed"; // File write failed
+            }
 
            // Placeholder: return Success for now
            return "Success";
@@ -66,6 +75,7 @@ public class Person {
            // Return Failed if offense date format is invalid
            return "Failed";
        }
+        
    }
       // Getter for testing suspension status
    public boolean getIsSuspended() {
