@@ -28,6 +28,12 @@ public class PersonManager {
                 return false;
             }
             
+            String[] parts = foundLine.split("\\|");
+            String currentID = parts[0];
+            String currentName = parts[1];
+            String currentAddress = parts[2];
+            String currentDOB = parts[3];
+            
         } catch (IOException e) {
             return false;
         }
