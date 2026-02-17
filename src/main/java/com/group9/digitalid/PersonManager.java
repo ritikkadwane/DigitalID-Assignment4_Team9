@@ -34,6 +34,15 @@ public class PersonManager {
             String currentAddress = parts[2];
             String currentDOB = parts[3];
             
+            char firstDigit = oldID.charAt(0);
+            if (firstDigit == '0' || firstDigit == '2' || firstDigit == '4' || 
+                firstDigit == '6' || firstDigit == '8') {
+                if (!newID.equals(oldID)) {
+                    System.out.println("Error: Even-digit IDs cannot be modified");
+                    return false;
+                }
+            }
+            
         } catch (IOException e) {
             return false;
         }
