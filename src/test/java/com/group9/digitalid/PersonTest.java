@@ -4,5 +4,15 @@ import org.junit.jupiter.api.Test;
 
 // Test class for Person demerit points functionality
 class PersonDemeritTest {
-   // Placeholder class, actual tests will be added later
+
+    @Test
+   void testValidDemeritAddition() {
+       // Create a person with valid birthdate
+       Person p = new Person("56s_d%&fAB", "15-11-1990");
+
+       // Add valid demerit points and expect success
+       assertEquals("Success", p.addDemeritPoints("10-02-2026", 3), "Should succeed with valid inputs");
+   }
+   
+
 }
