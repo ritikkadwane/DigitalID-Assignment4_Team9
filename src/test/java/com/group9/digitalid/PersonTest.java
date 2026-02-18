@@ -61,8 +61,7 @@ class PersonDemeritTest {
     @Test
     void testPointsBelowValidRange() {
         Person p = new Person("56s_d%&fAB", "15-11-1990");
-        assertEquals("Failed", p.addDemeritPoints("10-02-2026", 0), 
-                    "Should fail because points are below minimum of 1");
+        assertEquals("Failed", p.addDemeritPoints("10-02-2026", 0), "Should fail because points are below minimum of 1");
     }
     @Test
     void testNegativePoints() {
@@ -74,6 +73,12 @@ class PersonDemeritTest {
         Person p = new Person("22s_d%&fXY", "01-01-2008");
         p.addDemeritPoints("01-01-2026", 6);
         assertFalse(p.getIsSuspended(), "Under 21 should NOT be suspended with exactly 6 points");
-}
-
+    }
+    @Test
+    void testOver21ExactlyAtThresholdNotSuspended() {
+        Person p = new Person("56s_d%&fAB", "01-01-1990");
+        p.addDemeritPoints("01-01-2026", 6);
+        p.addDemeritPoints("02-01-2026", 6);
+        assertFalse(p.getIsSuspended(), "Over 21 should NOT be suspended with exactly 12 points");
+    }
 }
