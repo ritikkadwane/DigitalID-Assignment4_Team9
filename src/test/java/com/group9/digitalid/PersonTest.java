@@ -81,4 +81,9 @@ class PersonDemeritTest {
         p.addDemeritPoints("02-01-2026", 6);
         assertFalse(p.getIsSuspended(), "Over 21 should NOT be suspended with exactly 12 points");
     }
+    @Test
+    void testInvalidDateFormatReversed() {
+        Person p = new Person("56s_d%&fAB", "15-11-1990");
+        assertEquals("Failed", p.addDemeritPoints("2026-02-10", 3), "Should fail due to incorrect date format");
+    }
 }
