@@ -8,17 +8,17 @@ import java.nio.file.Paths;
 class PersonDemeritTest {
 
     @Test
-   void testValidDemeritAddition() {
-       // Create a person with valid birthdate
-       Person p = new Person("56s_d%&fAB", "15-11-1990");
+    void testValidDemeritAddition() {
+        // Create a person with valid birthdate
+        Person p = new Person("56s_d%&fAB", "15-11-1990");
 
-       // Add valid demerit points and expect success
-       assertEquals("Success", p.addDemeritPoints("10-02-2026", 3), "Should succeed with valid inputs");
+        // Add valid demerit points and expect success
+        assertEquals("Success", p.addDemeritPoints("10-02-2026", 3), "Should succeed with valid inputs");
    }
     @Test
-   void testInvalidDateFormat() {
-       // Create person
-       Person p = new Person("56s_d%&fAB", "15-11-1990");
+    void testInvalidDateFormat() {
+        // Create person
+        Person p = new Person("56s_d%&fAB", "15-11-1990");
 
        // Invalid date format (slashes instead of dashes) should fail
        assertEquals("Failed", p.addDemeritPoints("10/02/2026", 3), "Should fail due to invalid date format");
@@ -64,6 +64,10 @@ class PersonDemeritTest {
         assertEquals("Failed", p.addDemeritPoints("10-02-2026", 0), 
                     "Should fail because points are below minimum of 1");
     }
-
+    @Test
+    void testNegativePoints() {
+        Person p = new Person("56s_d%&fAB", "15-11-1990");
+        assertEquals("Failed", p.addDemeritPoints("10-02-2026", -1), "Should fail because points cannot be negative");
+    }
 
 }
