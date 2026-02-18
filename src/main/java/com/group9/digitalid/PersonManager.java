@@ -60,6 +60,13 @@ public class PersonManager {
                 }
             }
             
+            // TODO: Integration with shared validation logic
+            // Once Person 1's validation methods are merged, uncomment the following:
+            // if (!Validator.isValidID(newID)) return false;
+            // if (!Validator.isValidName(newName)) return false;
+            // if (!Validator.isValidAddress(newAddress)) return false;
+            // if (!Validator.isValidBirthdate(newBirthdate)) return false;
+            
         } catch (IOException e) {
             return false;
         }
