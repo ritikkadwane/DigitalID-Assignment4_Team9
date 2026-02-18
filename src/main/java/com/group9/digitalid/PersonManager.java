@@ -67,10 +67,14 @@ public class PersonManager {
             // if (!Validator.isValidAddress(newAddress)) return false;
             // if (!Validator.isValidBirthdate(newBirthdate)) return false;
             
+            String updatedLine = newID + "|" + newName + "|" + newAddress + "|" + newBirthdate;
+            lines.set(foundIndex, updatedLine);
+            Files.write(Paths.get(FILENAME), lines);
+            
+            return true;
         } catch (IOException e) {
             return false;
         }
-        return false;
     }
     
     private int calculateAge(String birthdate) {
