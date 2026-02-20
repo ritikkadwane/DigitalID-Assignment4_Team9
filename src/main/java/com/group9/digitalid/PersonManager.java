@@ -11,6 +11,24 @@ import java.util.List;
 public class PersonManager {
     private static final String FILENAME = "citizens.txt";
 
+    /**
+     * Updates a citizen's personal details in the database.
+     * 
+     * This method enforces specific business rules for the RMIT DigitalID system:
+     * 
+     *      1. Even-digit IDs are locked and cannot be changed (IDs starting with 0, 2, 4, 6, or 8).
+     * 
+     *      2. Minors under 18 cannot update their address.
+     * 
+     *      3. If you're changing someone's birthdate, you can't change anything else at the same time (no ID, name, or address changes).
+     * 
+     * @param oldID the citizen's current ID
+     * @param newID the new ID (can stay the same)
+     * @param newName the new name
+     * @param newAddress the new address
+     * @param newBirthdate the new birthdate (format: dd-MM-yyyy)
+     * @return true if the update succeeds, false if validation fails or the citizen isn't found
+     */
     public boolean updatePersonalDetails(String oldID, String newID, String newName, 
                                         String newAddress, String newBirthdate) {
         try {
@@ -77,6 +95,12 @@ public class PersonManager {
         }
     }
     
+    /**
+     * Figures out how old someone is based on when they were born.
+     * 
+     * @param birthdate the person's birthdate in dd-MM-yyyy format
+     * @return their age in years
+     */
     private int calculateAge(String birthdate) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         LocalDate dob = LocalDate.parse(birthdate, formatter);
