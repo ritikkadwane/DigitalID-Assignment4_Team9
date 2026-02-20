@@ -1,4 +1,4 @@
-// Import JUnit classes for assertions and tests
+package com.group9.digitalid;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 import java.io.IOException;

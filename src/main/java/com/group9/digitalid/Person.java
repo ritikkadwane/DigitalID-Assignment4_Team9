@@ -1,3 +1,4 @@
+package com.group9.digitalid;
 import java.util.HashMap;
 import java.util.Date;
 import java.text.SimpleDateFormat;
@@ -9,9 +10,9 @@ import java.io.IOException;
 
 public class Person {
     private String personID;
-    private String firstName;
-    private String lastName;
-    private String address;
+    //private String firstName;
+    //private String lastName;
+    //private String address;
     private String birthdate; // Format: DD-MM-YYYY
     private HashMap<Date, Integer> demeritPoints = new HashMap<>();
     private boolean isSuspended;
