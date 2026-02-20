@@ -1,5 +1,4 @@
 package com.group9.digitalid;
-import java.util.HashMap;
 import java.util.Date;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
@@ -14,7 +13,8 @@ public class Person {
     //private String lastName;
     //private String address;
     private String birthdate; // Format: DD-MM-YYYY
-    private HashMap<Date, Integer> demeritPoints = new HashMap<>();
+    // Using List to avoid overwriting points if two offenses share the same date
+    private java.util.List<Integer> demeritPointsList = new java.util.ArrayList<>();
     private boolean isSuspended;
 
     // Constructor to initialize required fields for logic testing
@@ -30,14 +30,14 @@ public class Person {
 
         try {
             // Parse offense date (will throw exception if invalid format)
-            Date offenseDate = dateFormat.parse(offenseDateStr);
+            dateFormat.parse(offenseDateStr); // Validate date format, throws ParseException if invalid
             // Validate that points are within allowed range (1-6)
             if (points < 1 || points > 6) {
                return "Failed"; // Invalid points
             }
 
-            // Add the points to the HashMap with offense date as key
-            demeritPoints.put(offenseDate, points);
+            // Add points to list (avoids collision if same date used twice)
+            demeritPointsList.add(points);
             // Parse birthdate to calculate age
             Date bDate = dateFormat.parse(this.birthdate);
             Calendar birth = Calendar.getInstance();
@@ -45,14 +45,17 @@ public class Person {
             Calendar now = Calendar.getInstance();
 
             // Calculate age
+            // Calculate age accurately using month and day comparison
             int age = now.get(Calendar.YEAR) - birth.get(Calendar.YEAR);
-            if (now.get(Calendar.DAY_OF_YEAR) < birth.get(Calendar.DAY_OF_YEAR)) {
-                age--; // Adjust if birthday hasn't occurred this year
+            if (now.get(Calendar.MONTH) < birth.get(Calendar.MONTH) ||
+                (now.get(Calendar.MONTH) == birth.get(Calendar.MONTH) &&
+                now.get(Calendar.DAY_OF_MONTH) < birth.get(Calendar.DAY_OF_MONTH))) {
+                age--; // Adjust if birthday hasn't occurred yet this year
             }
 
             // Calculate total demerit points accumulated
             int totalPoints = 0;
-            for (int p : demeritPoints.values()) {
+            for (int p : demeritPointsList) {
                 totalPoints += p;
             }
 
