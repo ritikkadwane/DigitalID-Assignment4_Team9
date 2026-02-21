@@ -69,4 +69,45 @@ class PersonAddPersonTest {
                 "22|River Road|Melbourne|Victoria|Australia", "1990-11-15");
         assertFalse(p.addPerson(tmpFile.toString()));
     }
+    
+    @Test
+    void duplicateIdReturnsFalse() {
+        Person p1 = new Person("56s_d%&fAB", "John", "Smith",
+            "32|Highland Street|Melbourne|Victoria|Australia", "15-11-1990");
+        assertTrue(p1.addPerson(tmpFile.toString()));
+
+        Person p2 = new Person("56s_d%&fAB", "Jane", "Doe",
+            "10|Main Street|Melbourne|Victoria|Australia", "01-05-1985");
+        assertFalse(p2.addPerson(tmpFile.toString()));
+    }
+
+    @Test
+    void missingFirstNameReturnsFalse() {
+        Person p = new Person("78x@y#z!CD", null, "Lee",
+            "15|George Street|Melbourne|Victoria|Australia", "25-07-1995");
+        assertFalse(p.addPerson(tmpFile.toString()));
+    }
+
+    @Test
+    void missingLastNameReturnsFalse() {
+        Person p = new Person("78x@y#z!CD", "Chris", null,
+            "15|George Street|Melbourne|Victoria|Australia", "25-07-1995");
+        assertFalse(p.addPerson(tmpFile.toString()));
+    }
+
+    @Test
+    void addressWrongNumberOfFieldsReturnsFalse() {
+        Person p = new Person("78x@y#z!CD", "Chris", "Lee",
+            "15|George Street|Melbourne|Victoria", "25-07-1995");
+        assertFalse(p.addPerson(tmpFile.toString()));
+    }
+
+    @Test
+    void emptyBirthdateReturnsFalse() {
+        Person p = new Person("78x@y#z!CD", "Chris", "Lee",
+            "15|George Street|Melbourne|Victoria|Australia", "");
+        assertFalse(p.addPerson(tmpFile.toString()));
+    }
+
+    
 }
