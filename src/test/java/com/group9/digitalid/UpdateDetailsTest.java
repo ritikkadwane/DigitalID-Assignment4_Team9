@@ -13,17 +13,19 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class UpdateDetailsTest {
-    private static final String TEST_FILE = "citizens.txt";
+
+    private static final String TEST_FILE = "persons.txt";
     private PersonManager manager;
 
     @BeforeEach
     public void setUp() throws IOException {
         manager = new PersonManager();
-        
+
         List<String> testData = Arrays.asList(
-            "111|John|Street1|01-01-1990",
-            "333|Kid|Street2|01-01-2015"
+                "56s_d%&fAB|John|Smith|32|Highland Street|Melbourne|Victoria|Australia|15-11-1990",
+                "22s_d%&fXY|Kid|User|1|Short Street|Melbourne|Victoria|Australia|01-01-2010"
         );
+
         Files.write(Paths.get(TEST_FILE), testData);
     }
 
@@ -34,39 +36,76 @@ public class UpdateDetailsTest {
 
     @Test
     public void testStandardValidUpdate() {
-        // Testing that adults can update their name and address normally
-        boolean result = manager.updatePersonalDetails("111", "111", "John Doe", "New Street", "01-01-1990");
-        assertTrue(result, "Adult should be able to update name and address.");
+        // checking that an adult can update name and address
+        boolean result = manager.updatePersonalDetails(
+                "56s_d%&fAB",
+                "56s_d%&fAB",
+                "John",
+                "Doe",
+                "99|King Street|Melbourne|Victoria|Australia",
+                "15-11-1990"
+        );
+        assertTrue(result);
     }
 
     @Test
     public void testEvenIDChangeFails() throws IOException {
-        // IDs that start with even numbers (0,2,4,6,8) should be locked from changes
-        List<String> testData = Arrays.asList("222|Alice|Street3|15-05-1985");
+        // preparing a record that starts with an even digit so ID change must be blocked
+        List<String> testData = Arrays.asList(
+                "24s_d%&fCD|Alice|Lee|10|Main Street|Melbourne|Victoria|Australia|15-05-1985"
+        );
         Files.write(Paths.get(TEST_FILE), testData);
-        
-        boolean result = manager.updatePersonalDetails("222", "223", "Alice", "Street3", "15-05-1985");
-        assertFalse(result, "System must reject ID changes if original ID starts with an even digit.");
+
+        boolean result = manager.updatePersonalDetails(
+                "24s_d%&fCD",
+                "34s_d%&fCD",
+                "Alice",
+                "Lee",
+                "10|Main Street|Melbourne|Victoria|Australia",
+                "15-05-1985"
+        );
+        assertFalse(result);
     }
 
     @Test
     public void testMinorAddressChangeFails() {
-        // Minors shouldn't be able to change their address
-        boolean result = manager.updatePersonalDetails("333", "333", "Kid", "NewStreet", "01-01-2015");
-        assertFalse(result, "System must block address changes for citizens under 18.");
+        // checking that under 18 cannot change address
+        boolean result = manager.updatePersonalDetails(
+                "22s_d%&fXY",
+                "22s_d%&fXY",
+                "Kid",
+                "User",
+                "2|Other Street|Melbourne|Victoria|Australia",
+                "01-01-2010"
+        );
+        assertFalse(result);
     }
 
     @Test
     public void testBirthdayChangeSuccess() {
-        // Should allow updating just the birthdate without changing other fields
-        boolean result = manager.updatePersonalDetails("111", "111", "John", "Street1", "02-02-1990");
-        assertTrue(result, "DOB-only update should be permitted.");
+        // checking DOB-only update is allowed when everything else stays the same
+        boolean result = manager.updatePersonalDetails(
+                "56s_d%&fAB",
+                "56s_d%&fAB",
+                "John",
+                "Smith",
+                "32|Highland Street|Melbourne|Victoria|Australia",
+                "16-11-1990"
+        );
+        assertTrue(result);
     }
 
     @Test
     public void testBirthdayWithOtherChangeFails() {
-        // Can't change birthdate and name at the same time
-        boolean result = manager.updatePersonalDetails("111", "111", "Jonathan", "Street1", "05-05-1990");
-        assertFalse(result, "System must reject updates where DOB and Name are changed simultaneously.");
+        // checking DOB change plus name change is rejected
+        boolean result = manager.updatePersonalDetails(
+                "56s_d%&fAB",
+                "56s_d%&fAB",
+                "Johnny",
+                "Smith",
+                "32|Highland Street|Melbourne|Victoria|Australia",
+                "16-11-1990"
+        );
+        assertFalse(result);
     }
 }

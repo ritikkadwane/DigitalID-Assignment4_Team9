@@ -65,7 +65,7 @@ class PersonAddPersonTest {
 
     @Test
     void birthdateFormat() {
-        Person p = new Person("45p_q!r@sGH", "Eve", "Taylor",
+        Person p = new Person("56p_q!r@GH", "Eve", "Taylor",
                 "22|River Road|Melbourne|Victoria|Australia", "1990-11-15");
         assertFalse(p.addPerson(tmpFile.toString()));
     }

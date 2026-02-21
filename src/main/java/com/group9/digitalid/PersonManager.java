@@ -2,41 +2,42 @@ package com.group9.digitalid;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 public class PersonManager {
-    private static final String FILENAME = "citizens.txt";
 
-    /**
-     * Updates a citizen's personal details in the database.
-     * 
-     * This method enforces specific business rules for the RMIT DigitalID system:
-     * 
-     *      1. Even-digit IDs are locked and cannot be changed (IDs starting with 0, 2, 4, 6, or 8).
-     * 
-     *      2. Minors under 18 cannot update their address.
-     * 
-     *      3. If you're changing someone's birthdate, you can't change anything else at the same time (no ID, name, or address changes).
-     * 
-     * @param oldID the citizen's current ID
-     * @param newID the new ID (can stay the same)
-     * @param newName the new name
-     * @param newAddress the new address
-     * @param newBirthdate the new birthdate (format: dd-MM-yyyy)
-     * @return true if the update succeeds, false if validation fails or the citizen isn't found
-     */
-    public boolean updatePersonalDetails(String oldID, String newID, String newName, 
-                                        String newAddress, String newBirthdate) {
+    private static final String FILENAME = "persons.txt";
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+    public boolean updatePersonalDetails(String oldID,
+                                        String newID,
+                                        String newFirstName,
+                                        String newLastName,
+                                        String newAddress,
+                                        String newBirthdate) 
+                                         {
+
+        if (oldID == null || newID == null || newFirstName == null || newLastName == null
+                || newAddress == null || newBirthdate == null) {
+            return false;
+        }
+
+        Path path = Paths.get(FILENAME);
+
         try {
-            List<String> lines = Files.readAllLines(Paths.get(FILENAME));
-            
+            if (!Files.exists(path)) return false;
+
+            List<String> lines = Files.readAllLines(path);
+
             int foundIndex = -1;
             String foundLine = null;
-            
+
             for (int i = 0; i < lines.size(); i++) {
                 if (lines.get(i).startsWith(oldID + "|")) {
                     foundIndex = i;
@@ -44,66 +45,123 @@ public class PersonManager {
                     break;
                 }
             }
-            
-            if (foundIndex == -1) {
-                return false;
-            }
-            
-            String[] parts = foundLine.split("\\|");
+
+            if (foundIndex == -1) return false;
+
+            String[] parts = foundLine.split("\\|", -1);
+            if (parts.length != 9) return false;
+
             String currentID = parts[0];
-            String currentName = parts[1];
-            String currentAddress = parts[2];
-            String currentDOB = parts[3];
-            
-            // Rule 1: Even-digit ID Lock
-            char firstDigit = oldID.charAt(0);
-            if ("02468".indexOf(firstDigit) != -1) {
-                if (!newID.equals(oldID)) {
-                    System.out.println("Error: Even-digit IDs are immutable.");
-                    return false;
-                }
+            String currentFirstName = parts[1];
+            String currentLastName = parts[2];
+
+            String currentAddress = parts[3] + "|" + parts[4] + "|" + parts[5] + "|" + parts[6] + "|" + parts[7];
+            String currentBirthdate = parts[8];
+
+            // checking addPerson rules for updated values
+            if (!isValidPersonID(newID)) return false;
+            if (!isValidAddress(newAddress)) return false;
+            if (!isValidBirthdate(newBirthdate)) return false;
+
+            // checking Condition 1: If under 18, address cannot change
+            int ageNow = calculateAge(currentBirthdate, LocalDate.now());
+            if (ageNow < 18) {
+                if (!currentAddress.trim().equals(newAddress.trim())) return false;
             }
-            
-            // Rule 2: Minor Address Lock
-            int age = calculateAge(currentDOB);
-            if (age < 18) {
-                if (!currentAddress.trim().equals(newAddress.trim())) {
-                    System.out.println("Error: Residential address updates are restricted for minors.");
-                    return false;
-                }
+
+            // checking Condition 2: If birthday is changed, no other fields can change
+            boolean birthdayChanged = !newBirthdate.trim().equals(currentBirthdate.trim());
+            if (birthdayChanged) {
+                if (!newID.trim().equals(currentID.trim())) return false;
+                if (!newFirstName.trim().equals(currentFirstName.trim())) return false;
+                if (!newLastName.trim().equals(currentLastName.trim())) return false;
+                if (!newAddress.trim().equals(currentAddress.trim())) return false;
             }
-            
-            // Rule 3: Birthday-Only Update Constraint
-            if (!newBirthdate.equals(currentDOB)) {
-                if (!newID.equals(currentID) || !newName.equals(currentName) || 
-                    !currentAddress.trim().equals(newAddress.trim())) {
-                    System.out.println("Error: If DOB is modified, other fields must remain unchanged.");
-                    return false;
-                }
+
+            // checking Condition 3: If first digit of current ID is even, ID cannot change
+            char firstChar = currentID.charAt(0);
+            if (firstChar == '2' || firstChar == '4' || firstChar == '6' || firstChar == '8') {
+                if (!newID.trim().equals(currentID.trim())) return false;
             }
-            
-            // (Person 1's work)
-            // if (!Validator.isValidID(newID)) return false;
-            
-            String updatedLine = newID + "|" + newName + "|" + newAddress + "|" + newBirthdate;
+
+            // checking duplicate ID if changing ID
+            boolean idChanging = !newID.trim().equals(currentID.trim());
+            if (idChanging) {
+                if (idExists(path, newID.trim())) return false;
+            }
+
+            String[] addrParts = newAddress.trim().split("\\|", -1);
+            if (addrParts.length != 5) return false;
+
+            String updatedLine = newID.trim() + "|" + newFirstName.trim() + "|" + newLastName.trim()
+                + "|" + addrParts[0].trim()
+                + "|" + addrParts[1].trim()
+                + "|" + addrParts[2].trim()
+                + "|" + addrParts[3].trim()
+                + "|" + addrParts[4].trim()
+                + "|" + newBirthdate.trim();
+
             lines.set(foundIndex, updatedLine);
-            Files.write(Paths.get(FILENAME), lines);
-            
+            Files.write(path, lines);
+
             return true;
+
         } catch (IOException e) {
             return false;
         }
     }
-    
-    /**
-     * Figures out how old someone is based on when they were born.
-     * 
-     * @param birthdate the person's birthdate in dd-MM-yyyy format
-     * @return their age in years
-     */
-    private int calculateAge(String birthdate) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-        LocalDate dob = LocalDate.parse(birthdate, formatter);
-        return Period.between(dob, LocalDate.now()).getYears();
+
+    private boolean idExists(Path path, String id) throws IOException {
+        List<String> lines = Files.readAllLines(path);
+        for (String line : lines) {
+            String[] parts = line.split("\\|", -1);
+            if (parts.length >= 1 && parts[0].trim().equals(id)) return true;
+        }
+        return false;
+    }
+
+    private boolean isValidPersonID(String id) {
+        if (id == null || id.length() != 10) return false;
+
+        for (int i = 0; i < 2; i++) {
+            char c = id.charAt(i);
+            if (c < '2' || c > '9') return false;
+        }
+
+        String mid = id.substring(2, 8);
+        int special = 0;
+        for (int i = 0; i < mid.length(); i++) {
+            if (!Character.isLetterOrDigit(mid.charAt(i))) special++;
+        }
+        if (special < 2) return false;
+
+        for (int i = 8; i < 10; i++) {
+            char c = id.charAt(i);
+            if (c < 'A' || c > 'Z') return false;
+        }
+
+        return true;
+    }
+
+    private boolean isValidAddress(String addr) {
+        if (addr == null || addr.isEmpty()) return false;
+        String[] p = addr.split("\\|", -1);
+        if (p.length != 5) return false;
+        return "Victoria".equals(p[3].trim());
+    }
+
+    private boolean isValidBirthdate(String d) {
+        if (d == null || d.isEmpty()) return false;
+        try {
+            LocalDate.parse(d.trim(), DATE_FORMATTER);
+            return true;
+        } catch (DateTimeParseException e) {
+            return false;
+        }
+    }
+
+    private int calculateAge(String birthdate, LocalDate onDate) {
+        LocalDate dob = LocalDate.parse(birthdate.trim(), DATE_FORMATTER);
+        return Period.between(dob, onDate).getYears();
     }
 }

@@ -50,11 +50,18 @@ class PersonAddIDTest {
     }
 
     @Test
-    void studentCardAllowedOnlyUnder18() {
+    void studentCardAllowedForUnder18() {
+    // checking allowing student card for under 18
         Person under18 = new Person("22s_d%&fXY", "01-01-2010");
-        assertTrue(under18.addID("student card", "123456789012", tmpIdsFile.toString(), LocalDate.of(2026, 2, 21)));
+        assertTrue(under18.addID("student card", "123456789012",
+                tmpIdsFile.toString(), LocalDate.of(2026, 2, 21)));
+    }
 
+    @Test
+    void studentCardBlockedForOver18() {
+    // checking blocking student card for 18 and above
         Person over18 = new Person("56s_d%&fAB", "01-01-1990");
-        assertFalse(over18.addID("student card", "123456789012", tmpIdsFile.toString(), LocalDate.of(2026, 2, 21)));
+        assertFalse(over18.addID("student card", "123456789012",
+                tmpIdsFile.toString(), LocalDate.of(2026, 2, 21)));
     }
 }
