@@ -15,6 +15,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class Person {
     private String personID;
@@ -28,6 +29,7 @@ public class Person {
 
     private static final String PERSONS_FILE = "persons.txt";
     private static final String DEMERIT_FILE = "demeritPoints.txt";
+    private static final String IDS_FILE = "ids.txt";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
     public Person(String personID, String birthdate) {
@@ -105,6 +107,32 @@ public class Person {
         LocalDate dob = LocalDate.parse(birthdateStr, DATE_FORMATTER);
         LocalDate offenceDate = LocalDate.parse(offenceDateStr, DATE_FORMATTER);
         return Period.between(dob, offenceDate).getYears();
+    }
+
+    // checking digits-only string
+    private boolean isAllDigits(String s) {
+        if (s == null || s.isEmpty()) return false;
+        for (int i = 0; i < s.length(); i++) {
+            if (!Character.isDigit(s.charAt(i))) return false;
+        }
+        return true;
+    }
+
+    // checking string as 2 uppercase letters followed by digits, with given length
+    private boolean isTwoUpperLettersThenDigits(String s, int totalLength) {
+        if (s == null || s.length() != totalLength) return false;
+
+        char c0 = s.charAt(0);
+        char c1 = s.charAt(1);
+
+        if (c0 < 'A' || c0 > 'Z') return false;
+        if (c1 < 'A' || c1 > 'Z') return false;
+
+        for (int i = 2; i < s.length(); i++) {
+            if (!Character.isDigit(s.charAt(i))) return false;
+        }
+
+        return true;
     }
 
     private boolean idExists(Path path, String id) throws IOException {
@@ -186,5 +214,49 @@ public class Person {
         }
 
         return "Success";
+    }
+
+    public boolean addID(String idType, String idNumber) {
+        return addID(idType, idNumber, IDS_FILE, LocalDate.now());
+    }
+
+    public boolean addID(String idType, String idNumber, String filePath, LocalDate onDate) {
+        if (idType == null || idNumber == null) return false;
+
+        String type = idType.trim().toLowerCase(Locale.ROOT);
+        String number = idNumber.trim();
+
+        boolean valid = false;
+
+        if (type.equals("passport")) {
+            valid = isTwoUpperLettersThenDigits(number, 8);
+        } else if (type.equals("drivers licence") || type.equals("driverslicence")
+                || type.equals("driver licence") || type.equals("driverlicence")) {
+            valid = isTwoUpperLettersThenDigits(number, 10);
+        } else if (type.equals("medicare")) {
+            valid = number.length() == 9 && isAllDigits(number);
+        } else if (type.equals("student card") || type.equals("studentcard")) {
+            if (number.length() == 12 && isAllDigits(number)) {
+                try {
+                    LocalDate dob = LocalDate.parse(this.birthdate, DATE_FORMATTER);
+                    int age = Period.between(dob, onDate).getYears();
+                    valid = age < 18;
+                } catch (DateTimeParseException e) {
+                    valid = false;
+                }
+            }
+        } else {
+            return false;
+        }
+
+        if (!valid) return false;
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, true))) {
+            writer.write(personID + "|" + type + "|" + number);
+            writer.newLine();
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
     }
 }
