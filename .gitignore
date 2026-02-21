@@ -1,22 +1,26 @@
-# Maven
-target/
-pom.xml.tag
-pom.xml.releaseBackup
-pom.xml.versionsBackup
-pom.xml.next
+# Maven build directory
+/target/
 
-# IDE
+# Runtime data files (do not track)
+demeritPoints.txt
+persons.txt
+citizens.txt
+
+# Logs
+*.log
+
+# IDE files (VS Code)
+.vscode/
+
+# IntelliJ / JetBrains
 .idea/
 *.iml
-.vscode/
-*.class
-.settings/
+
+# Eclipse
 .project
 .classpath
+.settings/
 
-# OS
+# OS files
 .DS_Store
 Thumbs.db
-
-# Data files
-persons.txt

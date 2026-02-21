@@ -9,11 +9,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Person {
     private String personID;
@@ -21,10 +22,13 @@ public class Person {
     private String lastName;
     private String address;
     private String birthdate;
-    private HashMap<Date, Integer> demeritPoints = new HashMap<>();
+
+    private final List<Integer> demeritPoints = new ArrayList<>();
     private boolean isSuspended;
 
     private static final String PERSONS_FILE = "persons.txt";
+    private static final String DEMERIT_FILE = "demeritPoints.txt";
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
     public Person(String personID, String birthdate) {
         this.personID = personID;
@@ -53,27 +57,31 @@ public class Person {
     public void setBirthdate(String birthdate) { this.birthdate = birthdate; }
     public boolean getIsSuspended() { return isSuspended; }
 
-    // 10 chars, first 2 digits 2-9, 2+ special in middle, last 2 A-Z
+    // checking 10 chars, first 2 digits 2-9, 2+ special in middle, last 2 A-Z
     private boolean checkID(String id) {
         if (id == null || id.length() != 10) return false;
+
         for (int i = 0; i < 2; i++) {
             char c = id.charAt(i);
             if (c < '2' || c > '9') return false;
         }
+
         String mid = id.substring(2, 8);
         int special = 0;
         for (int i = 0; i < mid.length(); i++) {
             if (!Character.isLetterOrDigit(mid.charAt(i))) special++;
         }
         if (special < 2) return false;
+
         for (int i = 8; i < 10; i++) {
             char c = id.charAt(i);
             if (c < 'A' || c > 'Z') return false;
         }
+
         return true;
     }
 
-    // StreetNum|Street|City|State|Country, state has to be Victoria
+    // checking StreetNum|Street|City|State|Country, state is Victoria
     private boolean checkAddress(String addr) {
         if (addr == null || addr.isEmpty()) return false;
         String[] p = addr.split("\\|");
@@ -81,10 +89,22 @@ public class Person {
         return "Victoria".equals(p[3].trim());
     }
 
-    // DD-MM-YYYY
+    // checking dd-MM-yyyy by parsing
     private boolean checkBirthdate(String d) {
         if (d == null || d.isEmpty()) return false;
-        return d.trim().matches("(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-(19|20)\\d{2}");
+        try {
+            LocalDate.parse(d.trim(), DATE_FORMATTER);
+            return true;
+        } catch (DateTimeParseException e) {
+            return false;
+        }
+    }
+
+    // calculating age at the time of the offence for keeping suspension stable
+    private int calculateAgeOnDate(String birthdateStr, String offenceDateStr) {
+        LocalDate dob = LocalDate.parse(birthdateStr, DATE_FORMATTER);
+        LocalDate offenceDate = LocalDate.parse(offenceDateStr, DATE_FORMATTER);
+        return Period.between(dob, offenceDate).getYears();
     }
 
     private boolean idExists(Path path, String id) throws IOException {
@@ -103,22 +123,29 @@ public class Person {
     }
 
     public boolean addPerson(String filePath) {
-        if (personID == null || firstName == null || lastName == null || address == null || birthdate == null)
+        if (personID == null || firstName == null || lastName == null || address == null || birthdate == null) {
             return false;
+        }
+
         if (!checkID(personID)) return false;
         if (!checkAddress(address)) return false;
         if (!checkBirthdate(birthdate)) return false;
 
         Path path = Paths.get(filePath);
+
         try {
             if (idExists(path, personID)) return false;
+
             File f = path.toFile();
-            if (f.getParentFile() != null && !f.getParentFile().exists())
+            if (f.getParentFile() != null && !f.getParentFile().exists()) {
                 f.getParentFile().mkdirs();
+            }
+
             try (BufferedWriter w = new BufferedWriter(new FileWriter(f, true))) {
                 w.write(personID + "|" + firstName + "|" + lastName + "|" + address + "|" + birthdate);
                 w.newLine();
             }
+
             return true;
         } catch (IOException e) {
             return false;
@@ -126,33 +153,38 @@ public class Person {
     }
 
     public String addDemeritPoints(String offenseDateStr, int points) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
-        dateFormat.setLenient(false);
         try {
-            Date offenseDate = dateFormat.parse(offenseDateStr);
-            if (points < 1 || points > 6) return "Failed";
-            demeritPoints.put(offenseDate, points);
-            Date bDate = dateFormat.parse(this.birthdate);
-            Calendar birth = Calendar.getInstance();
-            birth.setTime(bDate);
-            Calendar now = Calendar.getInstance();
-            int age = now.get(Calendar.YEAR) - birth.get(Calendar.YEAR);
-            if (now.get(Calendar.DAY_OF_YEAR) < birth.get(Calendar.DAY_OF_YEAR)) age--;
-            int totalPoints = 0;
-            for (int p : demeritPoints.values()) {
-                totalPoints += p;
-            }
-            if (age < 21 && totalPoints > 6) this.isSuspended = true;
-            else if (age >= 21 && totalPoints > 12) this.isSuspended = true;
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter("demeritPoints.txt", true))) {
-                writer.write(personID + "|" + offenseDateStr + "|" + points + "|" + totalPoints + "|" + isSuspended);
-                writer.newLine();
-            } catch (IOException e) {
-                return "Failed";
-            }
-            return "Success";
-        } catch (ParseException e) {
+            LocalDate.parse(offenseDateStr, DATE_FORMATTER);
+        } catch (DateTimeParseException e) {
             return "Failed";
         }
+
+        if (points < 1 || points > 6) return "Failed";
+
+        demeritPoints.add(points);
+
+        int age;
+        try {
+            age = calculateAgeOnDate(this.birthdate, offenseDateStr);
+        } catch (DateTimeParseException e) {
+            return "Failed";
+        }
+
+        int totalPoints = 0;
+        for (int p : demeritPoints) {
+            totalPoints += p;
+        }
+
+        if (age < 21 && totalPoints > 6) this.isSuspended = true;
+        else if (age >= 21 && totalPoints > 12) this.isSuspended = true;
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(DEMERIT_FILE, true))) {
+            writer.write(personID + "|" + offenseDateStr + "|" + points + "|" + totalPoints + "|" + isSuspended);
+            writer.newLine();
+        } catch (IOException e) {
+            return "Failed";
+        }
+
+        return "Success";
     }
 }
