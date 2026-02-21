@@ -94,3 +94,31 @@ A successful workflow run confirms:
 - Project compiles correctly  
 - All tests pass  
 - Build is stable  
+
+---
+
+## References
+
+Oracle Java Documentation  
+https://docs.oracle.com/en/java/
+
+Apache Maven Documentation  
+https://maven.apache.org/
+
+JUnit 5 User Guide  
+https://junit.org/junit5/
+
+GitHub Actions Documentation  
+https://docs.github.com/en/actions
+
+Stack Overflow Developer Community  
+https://stackoverflow.com/
+
+GeeksforGeeks Programming Resources  
+https://www.geeksforgeeks.org/
+
+Baeldung Java Tutorials  
+https://www.baeldung.com/
+
+W3Schools Java Reference  
+https://www.w3schools.com/java/
