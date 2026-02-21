@@ -1,4 +1,22 @@
+# Maven
 target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+
+# IDE
+.idea/
+*.iml
 .vscode/
 *.class
-demeritPoints.txt   
+.settings/
+.project
+.classpath
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data files
+persons.txt
